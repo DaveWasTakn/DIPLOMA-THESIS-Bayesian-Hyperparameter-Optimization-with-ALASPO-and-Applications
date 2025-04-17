@@ -43,7 +43,7 @@ def generateInstance(width: int, height: int, numAgents: int, obstaclePercentage
         startPositions = selectedCells[:numAgents]
         goalPositions = selectedCells[numAgents:]
 
-    plot_grid(width, height, obstacles)
+    plot_grid(width, height, obstacles, startPositions, goalPositions)
 
     lines = [
         f"agent(1..{numAgents}).",
@@ -67,17 +67,48 @@ def writeInstance(instance: str, outputFile: str) -> None:
     print(outputFile)
 
 
-def plot_grid(sizeX, sizeY, obstacles):
-    # https://matplotlib.org/stable/gallery/specialty_plots/hinton_demo.html
-    plt.figure(figsize=(5, 5))
+def plot_grid(sizeX, sizeY, obstacles, startPositions=None, goalPositions=None):
+    fig, ax = plt.subplots(figsize=(5, 5))
     for x in range(1, sizeX + 1):
         for y in range(1, sizeY + 1):
-            color = 'black' if (x, y) in obstacles else 'white'
-            plt.gca().add_patch(plt.Rectangle((x, y), 1, 1, edgecolor='gray', facecolor=color))
-    plt.xlim(1, sizeX + 1)
-    plt.ylim(1, sizeY + 1)
-    plt.gca().set_aspect('equal')
-    plt.axis('off')
+            face = 'black' if (x, y) in obstacles else 'white'
+            ax.add_patch(plt.Rectangle((x, y), 1, 1,
+                                       edgecolor='gray',
+                                       facecolor=face))
+    ax.set_xlim(1, sizeX + 1)
+    ax.set_ylim(1, sizeY + 1)
+    ax.set_aspect('equal')
+    ax.axis('off')
+
+    if not startPositions or not goalPositions:
+        plt.show()
+        return
+
+    numAgents = len(startPositions)
+    cmap = plt.colormaps['tab20'].resampled(numAgents)
+    colors = [cmap(i) for i in range(numAgents)]
+
+    markerSize = (14, 20) if sizeX < 10 else (7, 10)
+
+    for i, (s, g) in enumerate(zip(startPositions, goalPositions)):
+        sx, sy = s
+        gx, gy = g
+        c = colors[i]
+
+        ax.plot(
+            sx + 0.5, sy + 0.5,
+            marker='o', markersize=markerSize[0],
+            markeredgecolor='k',
+            markerfacecolor=c
+        )
+
+        ax.plot(
+            gx + 0.5, gy + 0.5,
+            marker='*', markersize=markerSize[1],
+            markeredgecolor='k',
+            markerfacecolor=c
+        )
+
     plt.show()
 
 
@@ -86,7 +117,7 @@ if __name__ == "__main__":
     # Gómez, R. N., Hernández, C., & Baier, J. A. (2020). Solving Sum-of-Costs Multi-Agent Pathfinding with Answer-Set Programming. Proceedings of the AAAI Conference on Artificial Intelligence, 34(06), 9867-9874.
     # https://doi.org/10.1609/aaai.v34i06.6540
 
-    parentOutputDir = "mapf_instances_delme"
+    parentOutputDir = "mapf_instances"
     os.makedirs(parentOutputDir, exist_ok=True)
 
     obstaclePercentages = [0, 10, 25]
